@@ -21,5 +21,5 @@ disable-model-invocation: true
 6. Write `docs/impl-plan.md` with the standard header, `Status: Draft`.
 
 ## Gate
-Ask the human to approve. Setting `Status: Approved` **unlocks edits to `src/` and `tests/`** (enforced by `.claude/hooks/guard.js`).
+Ask the human to approve. Setting `Status: Approved` **unlocks edits to `src/` and `tests/`** (enforced by `.claude/hooks/guard.cjs`).
 Commit `plan: dependency-ordered task breakdown`, then suggest `/sdlc-implement`.

@@ -7,7 +7,7 @@
 ## 1. Summary
 **Pass.** Every acceptance criterion (AC1–AC9) and every FR/NFR is covered by at least one automated test or an explicit check
 below. All CI steps pass locally on Windows with Node 24. The generated output document passes the 7-point quality check.
-Verification found one more defect (V-1, an unhelpful message for an unknown `--ref`), which is fixed and has a regression test.
+Verification found two more defects: V-1, an unhelpful message for an unknown `--ref` (fixed, with a regression test), and V-2, the pipeline's own Claude Code hooks silently not running since T-1 (fixed and re-tested, §4).
 
 | Check | Result |
 |-------|--------|
@@ -102,6 +102,14 @@ Run without a token against the public repository `saikusal/docsync` (whose `mai
 | Repository doesn't exist | `docsync check --repo saikusal/does-not-exist-xyz-123` | exit 3, "… was not found, or the token has no access to it (404)" ✅ |
 | Remote init to a file | `docsync init --repo saikusal/docsync --yes --out <tmp>` | exit 0, file has 6 marker blocks ✅ |
 | Unknown ref | `docsync check --repo saikusal/docsync --ref no-such-branch-xyz` | First run: exit 3 "GitHub request … failed (422)", which isn't actionable → **V-1**. After the fix: "ref "no-such-branch-xyz" was not found in saikusal/docsync; check the branch, tag or commit name" ✅ |
+
+**V-2 (Major, pipeline tooling — not product code):** the Claude Code hooks in `.claude/hooks/` were CommonJS `.js` files. Since T-1
+set `"type": "module"` in `package.json`, Node loaded them as ES modules and every hook crashed with `require is not defined`. A crashing hook
+does not block, so from T-1 until this point the *src-before-plan guard*, the *secret guard* and the *tests-before-commit* hook were silently
+inactive. Impact check: every commit in Phases 5–7 was preceded by a manual `lint` + `typecheck` + `vitest run` (visible in the session log), and
+`git log` shows no commit that adds a `.env` file or a token. Fix: hooks renamed to `.cjs` (references updated in settings.json, CLAUDE.md and
+skills); re-tested: guard blocks `.env` and token-shaped content (exit 2), allows `src/` now that the plan is Approved, and the pre-commit hook runs
+the suite. Lesson for the pipeline: hook scripts should be `.cjs`/`.mjs` so they never depend on the project's module type.
 
 **V-1 (Minor, FR-21):** GitHub answers 422 for an unknown ref; the generic mapper didn't recognise it. Fixed in `GitHubSource.create`
 (404/422 on ref resolution → a message naming the ref), with regression tests for both statuses.

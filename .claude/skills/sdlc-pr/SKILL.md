@@ -7,7 +7,7 @@ disable-model-invocation: true
 # Phase 8 — Pull request
 
 ## Precondition
-All artifacts are `Approved` (check with `node .claude/hooks/status.js`), and the working tree is clean apart from this phase's changes.
+All artifacts are `Approved` (check with `node .claude/hooks/status.cjs`), and the working tree is clean apart from this phase's changes.
 
 ## Steps
 1. Make sure the work is on a feature branch (e.g. `feature/doc-sync`), not `main`. Create one if needed.

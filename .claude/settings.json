@@ -5,14 +5,14 @@
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(npm test:*)",
-      "Bash(node .claude/hooks/status.js:*)"
+      "Bash(node .claude/hooks/status.cjs:*)"
     ]
   },
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/status.js\"" }
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/status.cjs\"" }
         ]
       }
     ],
@@ -20,13 +20,13 @@
       {
         "matcher": "Write|Edit|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.js\"" }
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.cjs\"" }
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit.js\"", "timeout": 300 }
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit.cjs\"", "timeout": 300 }
         ]
       }
     ]
