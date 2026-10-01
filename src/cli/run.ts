@@ -46,7 +46,11 @@ function addCommonOptions(command: Command): Command {
 
 /** Runs the CLI and returns the exit code (0 ok, 1 drift, 2 usage/config/markers, 3 source/GitHub). */
 export async function run(argv: readonly string[], options: RunOptions = {}): Promise<number> {
-  const env = options.env ?? process.env;
+  // Only these two variables are ever read; an empty value counts as unset.
+  const env = options.env ?? {
+    GITHUB_TOKEN: process.env.GITHUB_TOKEN || undefined,
+    GITHUB_STEP_SUMMARY: process.env.GITHUB_STEP_SUMMARY || undefined,
+  };
   const stdout = options.stdout ?? process.stdout;
   const stderr = options.stderr ?? process.stderr;
   const debug = argv.includes('--debug');

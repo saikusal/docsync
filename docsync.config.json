@@ -1,0 +1,4 @@
+{
+  "sections": ["overview", "tech-stack", "setup", "env-vars", "project-structure"],
+  "include": ["src/**"]
+}
