@@ -4,6 +4,15 @@ All notable changes to this project are documented here (Keep a Changelog format
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-01
+
+### Changed
+- Published to npm as `@saikusal/docsync` (the name `docsync` is too close to the existing `doc-sync` package).
+  The command is still `docsync`.
+- README install instructions use the npm package: `npx @saikusal/docsync`, `npm install --global @saikusal/docsync`,
+  or `npm install --save-dev @saikusal/docsync`.
+- `npm publish` runs lint, typecheck and the full test suite first (`prepublishOnly`).
+
 ## [0.1.0] - 2026-10-01
 
 ### Added
@@ -31,5 +40,6 @@ All notable changes to this project are documented here (Keep a Changelog format
 ### Fixed
 - Claude Code pipeline hooks renamed to `.cjs` so they run in a `"type": "module"` package (V-2).
 
-[Unreleased]: https://github.com/saikusal/docsync/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/saikusal/docsync/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/saikusal/docsync/releases/tag/v0.1.1
 [0.1.0]: https://github.com/saikusal/docsync/releases/tag/v0.1.0

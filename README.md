@@ -114,12 +114,13 @@ Everything outside the markers stays exactly as you wrote it, byte for byte.
 You need Node.js 22.12 or newer. Run these commands in the root folder of your project:
 
 ```sh
-npx github:saikusal/docsync init     # shows which sections it will add, then asks
-npx github:saikusal/docsync sync     # fills the sections from your code
-npx github:saikusal/docsync check    # exit code 0 means the README is up to date
+npx @saikusal/docsync init     # shows which sections it will add, then asks
+npx @saikusal/docsync sync     # fills the sections from your code
+npx @saikusal/docsync check    # exit code 0 means the README is up to date
 ```
 
-The first run downloads and builds docsync, which takes about a minute. Later runs use the npm cache.
+docsync is published on npm as [`@saikusal/docsync`](https://www.npmjs.com/package/@saikusal/docsync). The command it installs is
+called `docsync`.
 
 ## 4. Using docsync in your own project
 
@@ -127,15 +128,13 @@ The first run downloads and builds docsync, which takes about a minute. Later ru
 
 Choose one option.
 
-**Option A: no installation.** Run it with `npx` as shown in the quick start. This is the easiest way and works in CI too.
+**Option A: no installation.** Run it with `npx @saikusal/docsync` as shown in the quick start. This is the easiest way and
+works in CI too.
 
 **Option B: install once on your machine.**
 
 ```sh
-git clone https://github.com/saikusal/docsync.git
-cd docsync
-npm ci
-npm link
+npm install --global @saikusal/docsync
 ```
 
 After this the `docsync` command works in every folder.
@@ -143,7 +142,7 @@ After this the `docsync` command works in every folder.
 **Option C: pin a version in your project.** Add it as a development dependency so everyone on the team uses the same version:
 
 ```sh
-npm install --save-dev github:saikusal/docsync#v0.1.0
+npm install --save-dev @saikusal/docsync
 ```
 
 Then add scripts to your `package.json`:
@@ -194,7 +193,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - run: npx --yes github:saikusal/docsync check
+      - run: npx --yes @saikusal/docsync check
 ```
 
 Now every pull request is checked. When someone changes the code without updating the docs, the job fails and shows exactly
@@ -329,10 +328,10 @@ settings of the GitHub account and run the jobs again. Nothing in the project ne
 docs-check:
   image: node:22
   script:
-    - npx --yes github:saikusal/docsync check
+    - npx --yes @saikusal/docsync check
 ```
 
-**Jenkins, Azure Pipelines, CircleCI and others:** add a step that runs `npx --yes github:saikusal/docsync check` in an
+**Jenkins, Azure Pipelines, CircleCI and others:** add a step that runs `npx --yes @saikusal/docsync check` in an
 environment with Node.js 22.12 or newer.
 
 **A local git hook** that refuses commits with stale docs, for example with Husky (`.husky/pre-commit`):
@@ -496,11 +495,10 @@ turns them into Markdown. To add a section, write the module, add its id to `src
 
 ## 14. Roadmap
 
-1. Publish to the npm registry, so `npx docsync check` works without the `github:` prefix.
-2. A reusable GitHub Action, so other repositories can add the check with a single `uses:` line.
-3. Automatic fix pull requests: instead of only failing, CI opens a pull request with the updated README.
-4. More frameworks: Fastify, Next.js API routes, NestJS and Koa.
-5. Monorepo support and documentation files other than the README.
+1. A reusable GitHub Action, so other repositories can add the check with a single `uses:` line.
+2. Automatic fix pull requests: instead of only failing, CI opens a pull request with the updated README.
+3. More frameworks: Fastify, Next.js API routes, NestJS and Koa.
+4. Monorepo support and documentation files other than the README.
 
 ## 15. How this project was built
 
@@ -539,6 +537,8 @@ covered by a test, and each one is recorded in the documents above.
 
 ## 16. Development
 
+To work on docsync itself:
+
 ```sh
 git clone https://github.com/saikusal/docsync.git
 cd docsync
@@ -561,12 +561,12 @@ Everything below this line is maintained by docsync from this repository and che
 <!-- docsync:start overview -->
 | Field | Value |
 | --- | --- |
-| Name | `docsync` |
+| Name | `@saikusal/docsync` |
 | Description | Keeps a repository's README in sync with its code: env vars, API routes, setup, tech stack and more. |
-| Version | `0.1.0` |
+| Version | `0.1.1` |
 | License | MIT |
 | Default branch | Not Found |
-| Topics | Not Found |
+| Topics | `ci`, `cli`, `docs`, `documentation`, `drift`, `env`, `express`, `github-actions`, `readme`, `sync` |
 | Latest release | Not Found |
 <!-- docsync:end overview -->
 
@@ -622,6 +622,7 @@ npm ci
 | `format` | `npm run format` | `prettier --write .` |
 | `lint` | `npm run lint` | `eslint . && prettier --check .` |
 | `prepare` | `npm run prepare` | `npm run build` |
+| `prepublishOnly` | `npm run prepublishOnly` | `npm run lint && npm run typecheck && npm test` |
 | `test` | `npm run test` | `vitest run` |
 | `test:coverage` | `npm run test:coverage` | `vitest run --coverage` |
 | `typecheck` | `npm run typecheck` | `tsc --noEmit` |

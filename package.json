@@ -1,7 +1,23 @@
 {
-  "name": "docsync",
-  "version": "0.1.0",
+  "name": "@saikusal/docsync",
+  "version": "0.1.1",
   "description": "Keeps a repository's README in sync with its code: env vars, API routes, setup, tech stack and more.",
+  "keywords": [
+    "readme",
+    "documentation",
+    "docs",
+    "sync",
+    "cli",
+    "ci",
+    "github-actions",
+    "express",
+    "env",
+    "drift"
+  ],
+  "homepage": "https://github.com/saikusal/docsync#readme",
+  "bugs": {
+    "url": "https://github.com/saikusal/docsync/issues"
+  },
   "license": "MIT",
   "author": "saikusal",
   "repository": {
@@ -18,6 +34,9 @@
   "engines": {
     "node": ">=22.12"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup",
     "prepare": "npm run build",
@@ -26,7 +45,8 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "docsync": "node dist/cli.js"
+    "docsync": "node dist/cli.js",
+    "prepublishOnly": "npm run lint && npm run typecheck && npm test"
   },
   "dependencies": {
     "@babel/parser": "^7.29.9",
