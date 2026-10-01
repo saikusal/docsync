@@ -170,3 +170,20 @@ describe('mapLimit', () => {
     expect(peak).toBe(2);
   });
 });
+
+describe('unknown --ref (verification finding V-1)', () => {
+  it.each([404, 422])('names the ref when GitHub answers %i', async (status) => {
+    const routes = fakeRepoRoutes({ 'src/a.ts': '' });
+    routes['GET /repos/octo/app/commits/nope'] = () =>
+      json({ message: 'No commit found for SHA: nope' }, status);
+    const fake = createFakeFetch(routes);
+    const { logger } = createMemoryLogger();
+    await expect(
+      GitHubSource.create(
+        createGitHubClient({ fetch: fake.fetch }),
+        { owner: 'octo', repo: 'app' },
+        { logger, ref: 'nope' },
+      ),
+    ).rejects.toThrow('ref "nope" was not found in octo/app; check the branch, tag or commit name');
+  });
+});

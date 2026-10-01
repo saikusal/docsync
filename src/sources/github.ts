@@ -116,7 +116,20 @@ export class GitHubSource implements RepoSource {
       client.rest.repos.get({ owner: repo.owner, repo: repo.repo }),
     );
     const ref = options.ref ?? repoData.default_branch;
-    const { data: commit } = await call(label, () => client.rest.repos.getCommit({ ...repo, ref }));
+    const { data: commit } = await call(label, async () => {
+      try {
+        return await client.rest.repos.getCommit({ ...repo, ref });
+      } catch (error) {
+        // GitHub answers 404 or 422 ("No commit found for SHA") for an unknown branch, tag or SHA.
+        const status = (error as { status?: number }).status;
+        if (options.ref !== undefined && (status === 404 || status === 422)) {
+          throw new SourceError(
+            `ref "${ref}" was not found in ${label}; check the branch, tag or commit name`,
+          );
+        }
+        throw error;
+      }
+    });
     logger.debug(`resolved ${label}@${ref} to ${commit.sha}`);
 
     const tree = await call(label, () =>
