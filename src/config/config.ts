@@ -1,6 +1,8 @@
 import path from 'node:path';
 import { z } from 'zod';
 import { UsageError } from '../infra/errors.js';
+import { toSafeRelative } from '../infra/paths.js';
+import { isSecretEnvFile } from '../scope/scope.js';
 import { SECTION_IDS, isSectionId, type SectionId } from '../sections/ids.js';
 
 export const CONFIG_FILE_NAME = 'docsync.config.json';
@@ -94,9 +96,13 @@ function parseSectionList(list: string): SectionId[] {
 
 /** The README must be a relative path that stays inside the target root. */
 function validateReadmePath(readme: string): string {
-  const normalized = path.posix.normalize(readme.replaceAll('\\', '/'));
-  if (path.posix.isAbsolute(normalized) || /^[A-Za-z]:/.test(normalized) || normalized.startsWith('..')) {
+  const normalized = toSafeRelative(readme);
+  if (normalized === null || normalized === '' || normalized === '.') {
     throw new UsageError(`README path "${readme}" must be relative to the repository root`);
+  }
+  // The README is read and rewritten, so it must never be a secrets file (NFR-1, ICR-1).
+  if (isSecretEnvFile(normalized)) {
+    throw new UsageError(`README path "${readme}" is an environment file; docsync never reads .env files`);
   }
   return normalized;
 }

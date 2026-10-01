@@ -1,6 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { SourceError, UsageError } from '../infra/errors.js';
+import { toSafeRelative } from '../infra/paths.js';
 import { createScope, type Scope, type ScopeOptions } from '../scope/scope.js';
 import { findOriginUrl, parseGitHubUrl } from './gitRemote.js';
 import type { MetadataProvider, RepoMetadata, RepoSource } from './types.js';
@@ -21,13 +22,7 @@ async function readOptional(file: string): Promise<string | null> {
   }
 }
 
-/** Normalises a relative path to POSIX form and rejects anything that escapes the root (NFR-4). */
-export function toSafeRelative(file: string): string | null {
-  const normalized = path.posix.normalize(file.replaceAll('\\', '/')).replace(/^\.\//, '');
-  if (normalized === '..' || normalized.startsWith('../') || path.posix.isAbsolute(normalized)) return null;
-  if (/^[A-Za-z]:/.test(normalized)) return null;
-  return normalized;
-}
+export { toSafeRelative } from '../infra/paths.js';
 
 export class LocalSource implements RepoSource {
   readonly label: string;

@@ -5,6 +5,7 @@ import type { SectionId } from '../sections/ids.js';
 import { SECTIONS } from '../sections/index.js';
 import type { RepoSource } from '../sources/types.js';
 import { buildContext } from './context.js';
+import { maskInlineSecrets } from './secrets.js';
 
 export interface PipelineOptions extends Pick<ScopeOptions, 'include' | 'exclude'> {
   sections: readonly SectionId[];
@@ -23,7 +24,7 @@ export async function renderSections(
   const rendered = new Map<SectionId, string>();
   for (const id of sections) {
     const section = SECTIONS[id];
-    rendered.set(id, section.render(await section.extract(context)));
+    rendered.set(id, maskInlineSecrets(section.render(await section.extract(context))));
   }
   return rendered;
 }

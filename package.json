@@ -1,6 +1,6 @@
 {
   "name": "@saikusal/docsync",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Keeps a repository's README in sync with its code: env vars, API routes, setup, tech stack and more.",
   "keywords": [
     "readme",

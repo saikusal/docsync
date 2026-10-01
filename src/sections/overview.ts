@@ -33,7 +33,8 @@ export function detectLicense(text: string): Maybe<string> {
 
 export const overview = defineSection<OverviewFacts>({
   id: 'overview',
-  async extract({ packageJson, metadata, source, files, readFile }) {
+  async extract({ packageJson, metadata: loadMetadata, source, files, readFile }) {
+    const metadata = await loadMetadata();
     const licenseFile = LICENSE_FILES.find((file) => files.includes(file));
     const licenseText = licenseFile ? await readFile(licenseFile) : null;
     const keywords = packageJson?.keywords?.length ? [...packageJson.keywords].sort() : null;

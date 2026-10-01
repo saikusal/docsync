@@ -459,7 +459,7 @@ tests/
 
 ### Testing
 
-- **225 tests**, about 95 percent of lines covered.
+- **248 tests**, about 95 percent of lines covered.
 - **Acceptance tests** run the real command line against a sample Express project and check every acceptance criterion of the user story.
 - **Secret tests** plant fake secret values in `.env`, in `.env.example` and in code fallbacks, and check that none of them appears in the README or in any output.
 - **GitHub tests** use a fake GitHub API, so the test suite never uses the network.
@@ -492,6 +492,8 @@ turns them into Markdown. To add a section, write the module, add its id to `src
 - Re-exports of routers are followed one level deep.
 - In monorepos only the root `package.json` is used. `package-lock.json` version 1 shows the declared version ranges.
 - Remote mode needs about one API request per source file; very large repositories should be checked out locally.
+- Local mode scans the files on disk, including untracked files that are not in `.gitignore`. CI checks a clean checkout, so commit or ignore scratch files before running `sync`.
+- npm installs resolve the dependency version ranges at install time; the lockfile only pins this repository's own CI.
 
 ## 14. Roadmap
 
@@ -519,6 +521,7 @@ The AI did the work; a human approved every phase.
 | Implementation plan | 18 tasks ordered by dependency | [docs/impl-plan.md](docs/impl-plan.md) |
 | Implementation | Each task tested first and committed on its own | git history |
 | Code review | 10 findings, 4 real bugs reproduced, fixed and covered by tests | [docs/code-review.md](docs/code-review.md) |
+| Independent review | Three reviewer agents with fresh context: 43 findings, 12 code fixes, all Major findings resolved | [docs/independent-review.md](docs/independent-review.md) |
 | Verification | Full test run, real GitHub API tests, quality check of the generated document | [docs/verification.md](docs/verification.md) |
 | Pull request | Description, changelog and reviewer checklist | [docs/pr-description.md](docs/pr-description.md) |
 
@@ -531,7 +534,7 @@ How Claude Code was used:
 | Agents | `.claude/agents/` | Reviewers for the design, the code and the generated document |
 | Hooks | `.claude/hooks/`, `.claude/settings.json` | Show the pipeline status, block code before the plan is approved, block secrets, run the tests before every commit |
 
-The process caught real problems: a wrong rule in the first design, four bugs in the code review, an unclear error found while
+A one page summary for evaluators is in [docs/capstone-report.md](docs/capstone-report.md). The process caught real problems: a wrong rule in the first design, four bugs in the code review, an unclear error found while
 testing against the real GitHub API, and the hooks themselves not running because of a module setting. Each one was fixed and
 covered by a test, and each one is recorded in the documents above.
 
@@ -563,7 +566,7 @@ Everything below this line is maintained by docsync from this repository and che
 | --- | --- |
 | Name | `@saikusal/docsync` |
 | Description | Keeps a repository's README in sync with its code: env vars, API routes, setup, tech stack and more. |
-| Version | `0.1.1` |
+| Version | `0.1.2` |
 | License | MIT |
 | Default branch | Not Found |
 | Topics | `ci`, `cli`, `docs`, `documentation`, `drift`, `env`, `express`, `github-actions`, `readme`, `sync` |

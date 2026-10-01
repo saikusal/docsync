@@ -38,6 +38,7 @@ jobs:
 
   docs-check:
     name: docs-check (README in sync with the code)
+    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

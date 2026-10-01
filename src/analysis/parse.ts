@@ -27,6 +27,19 @@ export function parseSource(file: string, code: string): ParseResult {
       allowAwaitOutsideFunction: true,
       allowImportExportEverywhere: true,
     });
+    // errorRecovery returns an AST even for invalid code; such files are skipped like any other parse failure (FR-22).
+    const recovered = (ast as { errors?: { loc?: { line?: number; column?: number }; message?: string }[] })
+      .errors?.[0];
+    if (recovered) {
+      return {
+        ok: false,
+        error: {
+          line: recovered.loc?.line ?? 0,
+          column: (recovered.loc?.column ?? 0) + 1,
+          message: String(recovered.message ?? 'syntax error').replace(/\s*\(\d+:\d+\)\s*$/, ''),
+        },
+      };
+    }
     return { ok: true, ast };
   } catch (error) {
     const loc = (error as { loc?: { line?: number; column?: number } }).loc;

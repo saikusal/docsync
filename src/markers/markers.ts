@@ -3,7 +3,8 @@ import { SECTION_TITLES, isSectionId, type SectionId } from '../sections/ids.js'
 
 const BOM = Uint8Array.of(0xef, 0xbb, 0xbf);
 /** A marker must be alone on its line, so markers quoted in inline code are ignored. */
-const MARKER_LINE = /^\s*<!--\s*docsync:(start|end)\s+([^\s>]+)\s*-->\s*$/;
+/** Up to 3 spaces of indentation, as in CommonMark; 4 or more is an indented code block (ICR-8). */
+const MARKER_LINE = /^ {0,3}<!--\s*docsync:(start|end)\s+([^\s>]+)\s*-->\s*$/;
 const FENCE = /^\s{0,3}(`{3,}|~{3,})/;
 
 export interface ReadmeText {
