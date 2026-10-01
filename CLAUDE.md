@@ -38,6 +38,7 @@ Every `docs/*.md` artifact starts with this header block, kept up to date:
 - **Ask, don't assume.** When the user story or an upstream artifact is ambiguous, ask the human. Record answers in the artifact; never invent requirements.
 - **"Not Found" over guessing.** If the generated documentation lacks a value, the tool must write `Not Found` rather than fabricate content.
 - **No secrets** in code, logs, test fixtures or generated docs. Tokens come from environment variables only (see `.env.example`). The hook in `.claude/hooks/guard.js` blocks obvious secret patterns.
+- **Branching:** all phase work (1–7) is committed on `feature/docs-sync`, never on `main`. Phase 8 opens the PR `feature/docs-sync → main`. If the current branch is `main`, switch to (or create) `feature/docs-sync` before committing.
 - **Small commits per phase / task**, message format: `<phase>: <summary>` e.g. `requirements: capture FR/NFR for doc sync`, `impl(T-3): add GitHub client`.
 - Do not push or open a PR without the human's go-ahead.
 
@@ -47,6 +48,10 @@ Every `docs/*.md` artifact starts with this header block, kept up to date:
 - `PreToolUse` on Write/Edit → blocks edits to `src/` or `tests/` until `docs/impl-plan.md` is Approved; blocks writing likely secrets and `.env` files.
 - `PreToolUse` on Bash → before any `git commit`, runs the test suite if one exists; a failing suite blocks the commit.
 
+## Repository
+
+GitHub: `saikusal/docsync` (public, MIT). Default branch `main`.
+
 ## Tech stack
 
-To be decided in Phase 2 and recorded here once `docs/architecture.md` is Approved.
+Agreed direction: **Node 20+ / TypeScript CLI** (the tool parses JS/TS repos). Final choices are recorded here once `docs/architecture.md` is Approved.
