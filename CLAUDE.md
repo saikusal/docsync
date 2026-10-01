@@ -54,4 +54,11 @@ GitHub: `saikusal/docsync` (public, MIT). Default branch `main`.
 
 ## Tech stack
 
-Agreed direction: **Node 20+ / TypeScript CLI** (the tool parses JS/TS repos). Final choices are recorded here once `docs/architecture.md` is Approved.
+Node.js >= 22.12 (CI: 22, 24) · TypeScript 6.0 (strict, ESM) · commander 15 · zod 4 · @octokit/rest 22 (+throttling, retry) ·
+@babel/parser + traverse 7.29 · fast-glob · ignore · diff · vitest 5 · eslint 10 + typescript-eslint · prettier · tsup.
+Details and rationale: `docs/architecture.md` §6.
+
+## Delegated approvals
+
+On 2026-10-01 saikusal delegated the gates for phases 3–7 ("go ahead with your recommendations"). Record those approvals as
+`saikusal (delegated) on <date>` and list each decision taken in the artifact. Phase 8 (push / PR) still needs an explicit go-ahead.

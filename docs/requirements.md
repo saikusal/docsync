@@ -100,7 +100,7 @@
 | NFR-4 | Security | Paths read in remote mode and local mode are validated (no path traversal outside the target root). | A test with a crafted `../` path is rejected. |
 | NFR-5 | Performance | A local repository of about 500 source files syncs in under 10 seconds on a typical developer laptop. | Benchmark test on a generated 500-file fixture. |
 | NFR-6 | Performance | Remote mode limits API usage: one tree request plus content requests only for in-scope files, and it respects rate-limit headers. | Request count asserted in mocked tests. |
-| NFR-7 | Portability | Runs on Windows, macOS and Linux with Node.js 20 or later. | CI matrix: ubuntu + windows (+ macOS optional) on Node 20 and 22. |
+| NFR-7 | Portability | Runs on Windows, macOS and Linux with Node.js 22.12 or later (supported LTS lines only). | CI matrix: ubuntu + windows (+ macOS optional) on Node 22 and 24. |
 | NFR-8 | Reliability | `sync` writes atomically (temporary file, then rename), so an interrupted run never leaves a half-written README. | Code review + test. |
 | NFR-9 | Testability | All GitHub access goes through one interface that can be replaced in tests; the whole test suite runs with no network access. | Tests pass with the network disabled. |
 | NFR-10 | Maintainability | Each section is a self-contained extractor + renderer module; adding a section requires one new module and a registry entry, with no changes to the marker, sync or check code. | Code review. |
@@ -108,7 +108,7 @@
 | NFR-12 | Dependency safety | Dependencies are version-pinned via the lockfile; `npm audit` reports no high or critical vulnerabilities. | `npm audit --audit-level=high` passes in CI. |
 
 ## 5. Assumptions and constraints
-- A-1: The story says Node 18+, but Node 18 is end-of-life, so the minimum is **Node 20** (as agreed when the tech stack was chosen). *Confirmed by saikusal.*
+- A-1: The story says Node 18+, but Node 18 and Node 20 are both end-of-life (Node 20 since 2026-04-30), so the minimum is **Node 22.12** (current library majors such as commander 15 and vitest 5 require it). *Amended in Phase 2 and confirmed by saikusal.*
 - A-2: The exit-code scheme in §3 (0/1/2/3) is a proposal so that CI can tell "docs drifted" apart from "tool failed". *Confirmed by saikusal.*
 - A-3: npm scripts are documented by their command line only; the tool doesn't invent descriptions of what a script does (FR-10).
 - A-4: Folder purposes come from a fixed list of well-known folder names, and anything else is `Not Found` (FR-13).
@@ -133,3 +133,9 @@
 
 ## 7. Open questions
 None. A-1 and A-2 were confirmed when this document was approved.
+
+## 8. Revision history
+| Date | Change | Reason | Approved by |
+|------|--------|--------|-------------|
+| 2026-10-01 | Initial version | Phase 1 | saikusal |
+| 2026-10-01 | NFR-7 and A-1: minimum Node 20 → **22.12**, CI matrix 22 + 24 | Found in Phase 2: Node 20 is end-of-life and current library majors need Node ≥ 22.12 | saikusal |
