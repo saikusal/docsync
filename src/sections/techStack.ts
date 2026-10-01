@@ -14,6 +14,9 @@ export interface TechStackFacts {
   dependencies: Dependency[];
 }
 
+/** Runtime dependencies first: they matter most to someone reading the README. */
+const KIND_ORDER: Record<Dependency['kind'], number> = { runtime: 0, dev: 1 };
+
 export const techStack = defineSection<TechStackFacts>({
   id: 'tech-stack',
   async extract({ packageJson, lockedVersions, sourceFiles }) {
@@ -36,7 +39,7 @@ export const techStack = defineSection<TechStackFacts>({
       dependencies: [
         ...collect(packageJson?.dependencies, 'runtime'),
         ...collect(packageJson?.devDependencies, 'dev'),
-      ].sort((a, b) => compareText(a.kind, b.kind) || compareText(a.name, b.name)),
+      ].sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || compareText(a.name, b.name)),
     };
   },
   render(facts) {

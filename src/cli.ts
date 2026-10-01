@@ -1,4 +1,3 @@
-import { VERSION } from './version.js';
+import { run } from './cli/run.js';
 
-process.stdout.write(`docsync ${VERSION}
-`);
+process.exitCode = await run(process.argv.slice(2));

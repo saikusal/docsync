@@ -1,3 +1,4 @@
+import { CONFIG_FILE_NAME } from '../config/config.js';
 import { mapLimit } from '../infra/concurrency.js';
 import { SourceError } from '../infra/errors.js';
 import type { Logger } from '../infra/logger.js';
@@ -70,9 +71,19 @@ export function createMetadataProvider(client: GitHubClient): MetadataProvider {
   };
 }
 
-export interface GitHubSourceOptions extends Pick<ScopeOptions, 'include' | 'exclude'> {
+export interface RemoteScope extends Pick<ScopeOptions, 'include' | 'exclude'> {
+  /** Extra files to download, e.g. the README (which is neither source nor manifest). */
+  alsoRead?: readonly string[];
+}
+
+export interface GitHubSourceOptions {
   ref?: string | undefined;
   logger: Logger;
+  /**
+   * Called once with the repository's docsync.config.json (or null) before anything else is downloaded,
+   * so the config's include/exclude and README path apply to remote mode too (FR-2).
+   */
+  configure?: (configText: string | null) => RemoteScope;
 }
 
 /**
@@ -130,12 +141,17 @@ export class GitHubSource implements RepoSource {
 
     const gitignoreEntry = blobs.find((entry) => entry.path === '.gitignore');
     const gitignore = gitignoreEntry?.sha ? await readBlob(gitignoreEntry.sha) : null;
-    const scope = createScope({ include: options.include, exclude: options.exclude, gitignore });
+    const configEntry = blobs.find((entry) => entry.path === CONFIG_FILE_NAME);
+    const configText = configEntry?.sha ? await readBlob(configEntry.sha) : null;
+    const { include, exclude, alsoRead = [] } = options.configure?.(configText) ?? {};
+    const scope = createScope({ include, exclude, gitignore });
+    const extra = new Set(alsoRead);
 
     const listed = blobs.filter((entry) => scope.isListed(entry.path as string));
     const toRead = listed.filter((entry) => {
       const file = entry.path as string;
-      if (file === '.gitignore' || (!scope.isSource(file) && !scope.isManifest(file))) return false;
+      if (file === '.gitignore' || file === CONFIG_FILE_NAME) return false;
+      if (!scope.isSource(file) && !scope.isManifest(file) && !extra.has(file)) return false;
       if ((entry.size ?? 0) > MAX_FILE_BYTES) {
         logger.warn(`skipping ${file}: larger than 1 MB (probably generated)`);
         return false;
@@ -155,6 +171,7 @@ export class GitHubSource implements RepoSource {
     const texts = await mapLimit(toRead, MAX_CONCURRENT_REQUESTS, (entry) => readBlob(entry.sha as string));
     const contents = new Map(toRead.map((entry, index) => [entry.path as string, texts[index] as string]));
     if (gitignore !== null) contents.set('.gitignore', gitignore);
+    if (configText !== null) contents.set(CONFIG_FILE_NAME, configText);
 
     const metadata = toMetadata(repoData, await latestRelease(client, repo));
     const files = listed.map((entry) => entry.path as string).sort();

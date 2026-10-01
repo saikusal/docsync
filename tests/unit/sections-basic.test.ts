@@ -159,9 +159,9 @@ describe('tech-stack (FR-9)', () => {
         '',
         '| Package | Version | Type |',
         '| --- | --- | --- |',
-        '| `typescript` | `~6.0.3` | dev |',
         '| `express` | `4.21.2` | runtime |',
         '| `zod` | `^4.0.0` | runtime |',
+        '| `typescript` | `~6.0.3` | dev |',
       ].join('\n'),
     );
   });
