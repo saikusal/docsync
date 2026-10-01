@@ -4,6 +4,8 @@ All notable changes to this project are documented here (Keep a Changelog format
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-01
+
 ### Added
 - `docsync` CLI (Node.js >= 22.12, TypeScript) with three commands (DOCS-101):
   - `init`: adds section markers to the README, or creates one; asks first, `--yes` for scripts.
@@ -20,5 +22,14 @@ All notable changes to this project are documented here (Keep a Changelog format
   job that runs `docsync check` on this repository's own README.
 - Agentic SDLC artifacts in `docs/` (requirements, architecture, design review, implementation plan, code review, verification).
 
+### Changed
+- README rewritten as full user documentation: the problem, usage in other projects, configuration, why GitHub Actions, other CI
+  systems and git hooks, architecture, technical details, security model, limitations and roadmap.
+- CI jobs have time limits (15 minutes for tests, 10 for docs-check), so a hung runner fails instead of running for hours.
+- The pipeline status hook reports "Pipeline complete" once all artifacts are approved and the work is on main.
+
 ### Fixed
 - Claude Code pipeline hooks renamed to `.cjs` so they run in a `"type": "module"` package (V-2).
+
+[Unreleased]: https://github.com/saikusal/docsync/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/saikusal/docsync/releases/tag/v0.1.0

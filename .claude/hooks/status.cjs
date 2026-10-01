@@ -25,4 +25,19 @@ const next = rows.find((r) => r.status !== 'Approved');
 
 console.log('SDLC pipeline status:');
 for (const r of rows) console.log(`  [${r.status === 'Approved' ? 'x' : ' '}] ${r.name.padEnd(24)} ${r.rel} — ${r.status}`);
-console.log(next ? `Current phase: ${next.name} (${next.rel} is ${next.status}).` : 'All artifacts approved — ready for /sdlc-pr.');
+function currentBranch() {
+  try {
+    const head = fs.readFileSync(path.join(root, '.git', 'HEAD'), 'utf8').trim();
+    return head.startsWith('ref: refs/heads/') ? head.slice('ref: refs/heads/'.length) : null;
+  } catch {
+    return null;
+  }
+}
+
+if (next) {
+  console.log(`Current phase: ${next.name} (${next.rel} is ${next.status}).`);
+} else if (['main', 'master'].includes(currentBranch())) {
+  console.log('Pipeline complete: every phase artifact is approved and the work is merged into main.');
+} else {
+  console.log('All phase artifacts are approved. Next: run /sdlc-pr to open the pull request.');
+}
