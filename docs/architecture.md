@@ -1,7 +1,7 @@
 # Architecture — Docs Sync (DOCS-101)
 
 > **Status:** Approved
-> **Approved by:** saikusal on 2026-10-01
+> **Approved by:** saikusal on 2026-10-01; revision 2 (design review) saikusal (delegated) on 2026-10-01
 > **Inputs:** docs/requirements.md (Approved, incl. 2026-10-01 NFR-7 amendment)
 
 ## 1. Context and goals
@@ -56,18 +56,18 @@ flowchart TD
 | C-1 | **CLI** (`src/cli/`) | Parses commands and options with commander, enforces that `--path` and `--repo` aren't both given, maps `DocsyncError.exitCode` to the process exit code, and prints a stack trace only with `--debug`. | FR-1, FR-3, FR-23, exit codes |
 | C-2 | **Config loader** (`src/config/`) | Merges defaults ← `docsync.config.json` ← CLI flags. A strict zod schema rejects unknown keys and wrong types, naming the field. | FR-2, FR-3 |
 | C-3 | **RepoSource interface** (`src/sources/types.ts`) | `listFiles(): Promise<string[]>` (POSIX relative paths, scope applied) · `readFile(path): Promise<string \| null>` · `getMetadata(): Promise<RepoMetadata \| null>` · `isEmpty(): Promise<boolean>`. Everything downstream depends only on this interface. | NFR-9, FR-17, FR-18 |
-| C-4 | **LocalSource** | Walks the file system with `fast-glob`, applies C-7, and reads files as UTF-8. Paths are resolved and checked to stay inside the root. Finds `origin` by reading `.git/config` (no git binary needed); if `GITHUB_TOKEN` is set **and** origin is on github.com, it delegates `getMetadata()` to C-5, otherwise returns `null`. | FR-18, FR-19, NFR-4 |
-| C-5 | **GitHubSource** | `GET /repos/{o}/{r}` (metadata, default branch) → `GET /repos/{o}/{r}/git/trees/{ref}?recursive=1` (one call) → applies C-7 to the tree → `GET /repos/{o}/{r}/contents/{path}?ref=` for each in-scope file (at most 8 concurrent requests). Latest release and topics come from the metadata and releases endpoints. A truncated tree response produces a warning. | FR-17, NFR-6 |
+| C-4 | **LocalSource** | Walks the file system with `fs.readdir(root, { recursive: true })`, applies C-7, and reads files as UTF-8. Paths are resolved and checked to stay inside the root. Finds `origin` by reading `.git/config` (no git binary needed); if `GITHUB_TOKEN` is set **and** origin is on github.com, it delegates `getMetadata()` to C-5, otherwise returns `null`. | FR-18, FR-19, NFR-4 |
+| C-5 | **GitHubSource** | `GET /repos/{o}/{r}` (metadata, default branch) → resolve `--ref` to a **commit SHA** once (`GET /commits/{ref}`) → `GET /git/trees/{sha}?recursive=1` → applies C-7 to the tree (skipping symlinks `120000`, submodules and in-scope files > 1 MB, each with a warning) → **quota pre-check**: if the requests needed exceed `x-ratelimit-remaining`, fail fast (exit 3) and suggest `GITHUB_TOKEN` → `GET /git/blobs/{sha}` for each in-scope file (at most 8 concurrent). A **truncated tree is an error** (exit 3): "too large for remote mode; use a local clone". Topics come from the metadata, the latest release from `releases/latest`. (DR-3, DR-4, DR-5) | FR-17, NFR-6 |
 | C-6 | **GitHub client + error mapper** | Creates Octokit with the throttling and retry plugins and the token from `process.env.GITHUB_TOKEN` only. Maps errors: 401 → invalid token, 404 → repo not found / no access, 403/429 with rate-limit headers → "rate limited until HH:MM", network/timeout, 5xx after retries. Uses only GET endpoints. | FR-21, NFR-2, NFR-3 |
-| C-7 | **Scan scope filter** (`src/scope/`) | One pure function shared by both sources. It decides which paths count as **source files** (JS/TS extensions, minus default excludes, minus test files, minus `.gitignore` rules via the `ignore` package, plus config include/exclude) and which are **always-readable manifests** (`package.json`, `package-lock.json`, `.env.example`, `LICENSE*`). `.env` and `.env.*` (apart from `.env.example`) are **never listed**, so they can't be read. | FR-19, NFR-1 |
-| C-8 | **Code analyser** (`src/analysis/`) | Parses each source file once with `@babel/parser` (plugins `typescript` and `jsx`, `errorRecovery: true`) and caches the syntax tree for the run. A parse failure produces a warning and the file is skipped. Provides the visitors: **env usage** (`process.env.X`, `process.env['X']`, destructuring from `process.env`, plus whether a fallback such as `\|\|`, `??` or a default value is present) and **Express routes** (see §5.3). | FR-11, FR-12, FR-22 |
+| C-7 | **Scan scope filter** (`src/scope/`) | One pure function shared by both sources. It decides which paths count as **source files** (JS/TS extensions, minus default excludes, minus test files, minus `.gitignore` rules via the `ignore` package, plus config include/exclude) and which are **always-readable manifests** (`package.json`, `package-lock.json`, `.env.example`, `LICENSE*`). `.env` and `.env.*` (apart from `.env.example`) are **never listed**, so they can't be read. `.env.example` is parsed for **key names only** (`^s*(exports+)?([A-Za-z_][A-Za-z0-9_]*)s*=`); the value part is discarded unread (DR-2). | FR-19, NFR-1 |
+| C-8 | **Code analyser** (`src/analysis/`) | Parses each source file once with `@babel/parser` (plugins `typescript` and `jsx`, `errorRecovery: true`) and caches the syntax tree for the run. A parse failure produces a warning (file, line, column and parser message only, **never a code frame**) and the file is skipped (DR-2). Literal values from the code (e.g. env fallbacks) are never put into facts. Provides the visitors: **env usage** (`process.env.X`, `process.env['X']`, destructuring from `process.env`, plus whether a fallback such as `\|\|`, `??` or a default value is present) and **Express routes** (see §5.3). | FR-11, FR-12, FR-22 |
 | C-9 | **Section modules** (`src/sections/*.ts`) | Each one exports `{ id, extract(ctx): Promise<Facts>, render(facts): string }`. There are six: `overview`, `tech-stack`, `setup`, `env-vars`, `api-endpoints`, `project-structure`. A registry array lists the enabled modules, so adding a section is one file plus one registry line. Renderers sort every row and contain no timestamps. | FR-8–FR-14, NFR-10 |
-| C-10 | **Marker engine** (`src/markers/`) | A pure-string engine. `parse(readme)` returns blocks `{section, contentStart, contentEnd, line}` or errors with line numbers (no end marker, nested block, duplicate, unknown section). `replace(readme, Map<section, content>)` splices new content in by offset, so the bytes outside the blocks are never re-serialised. It detects the README's EOL (CRLF or LF) and renders block content with the same EOL. `insertMissing(readme, sections)` supports `init`. | FR-4, FR-5, FR-6 |
+| C-10 | **Marker engine** (`src/markers/`) | A pure-string engine. `parse(readme)` returns blocks `{section, contentStart, contentEnd, line}` or errors with line numbers (no end marker, nested block, duplicate, unknown section). `replace(readme, Map<section, content>)` splices new content in by offset, so the bytes outside the blocks are never re-serialised. The README is read as bytes: a UTF-8 **BOM** is preserved, and each block uses the EOL of **its own start-marker line**, which handles mixed CRLF/LF files (DR-6). `insertMissing(readme, sections)` supports `init`. | FR-4, FR-5, FR-6 |
 | C-11 | **Pipeline** (`src/core/pipeline.ts`) | `render(source, config) → Map<section, markdown>`: checks for an empty repo, lists the files, builds the analysis context, runs the enabled section modules, and returns the rendered blocks. Commands share it. | FR-14, FR-20 |
-| C-12 | **Commands** (`src/commands/`) | `init`: insert the missing blocks (or create a minimal README), show a preview, require `--yes` or confirmation. `sync`: pipeline → marker replace → atomic write (local) or `--out`/stdout (remote); report the changed sections. `check`: pipeline → compare → drift report → exit 1/0; never writes the README. | FR-6, FR-7, FR-15, FR-16 |
-| C-13 | **Drift reporter** (`src/report/`) | Per stale section, a unified diff (`diff` package) for the terminal, and Markdown for `$GITHUB_STEP_SUMMARY` when that variable is set. All output goes through the redactor. | FR-16, AC9 |
-| C-14 | **Infra** (`src/infra/`) | `DocsyncError` (with `exitCode` 2 or 3); `Logger` (stderr for diagnostics, stdout for results) wrapping a **Redactor** that masks the literal `GITHUB_TOKEN` value and token-shaped strings; `writeFileAtomic` (write a temporary file in the same directory, then rename). | NFR-1, NFR-2, NFR-8, FR-23 |
-| C-15 | **CI workflow** (`.github/workflows/ci.yml`) | On `pull_request`: matrix {ubuntu, windows} × Node {22, 24}: `npm ci` → lint → typecheck → test (coverage) → `npm audit --audit-level=high`; then a `docs-check` job: build → `node dist/cli.js check` on this repo's README. Permissions: `contents: read`. | FR-24, NFR-7, NFR-12, AC9 |
+| C-12 | **Commands** (`src/commands/`) | `init`: insert the missing blocks (or create a minimal README), show a preview, require `--yes` or confirmation. If stdin is not a TTY and `--yes` is absent, exit 2 (DR-12). `sync`: pipeline → marker replace → atomic write (local) or `--out`/stdout (remote); report the changed sections. `check`: pipeline → compare → drift report → exit 1/0; never writes the README. | FR-6, FR-7, FR-15, FR-16 |
+| C-13 | **Drift reporter** (`src/report/`) | Per stale section, a unified diff (`diff` package) for the terminal, and Markdown for `$GITHUB_STEP_SUMMARY` when that variable is set, capped at 900 KiB with a truncation note (DR-13). All output goes through the redactor. | FR-16, AC9 |
+| C-14 | **Infra** (`src/infra/`) | `DocsyncError` (with `exitCode` 2 or 3); `Logger` (stderr for diagnostics, stdout for results) wrapping a **Redactor** that masks the literal `GITHUB_TOKEN` value and token-shaped strings; `writeFileAtomic` (write a temporary file in the same directory, then rename; on Windows `EPERM`/`EBUSY`, retry up to 5 times with 50→800 ms back-off, then exit 3 and remove the temporary file, never a non-atomic fallback) (DR-7). | NFR-1, NFR-2, NFR-8, FR-23 |
+| C-15 | **CI workflow** (`.github/workflows/ci.yml`) | On `pull_request`: matrix {ubuntu, windows} × Node {22, 24}: `npm ci` → lint → typecheck → test (coverage) → `npm audit --audit-level=high`; then a `docs-check` job: build → `node dist/cli.js check` on this repo's README (which gets markers via `docsync init` + `sync` before the job is enabled, DR-8). Permissions: `contents: read`. | FR-24, NFR-7, NFR-12, AC9 |
 
 ## 5. Key design details
 
@@ -77,7 +77,7 @@ export const NOT_FOUND = Symbol('NotFound');
 export type Maybe<T> = T | typeof NOT_FOUND;   // every optional fact uses this
 ```
 Extractors return `Maybe<…>` fields and never `undefined` or empty strings. A shared `fmt(value)` helper in the renderers turns
-`NOT_FOUND` into the literal text `Not Found`, so the rule lives in one place and can be checked in code review.
+`NOT_FOUND` into the literal text `Not Found`, so the rule lives in one place and can be checked in code review. **An empty list renders a single `Not Found` line** (DR-9).
 
 ### 5.2 Determinism
 - Rows are sorted with `localeCompare(…, 'en')` (routes by path, then method), and file paths use `/` on every OS.
@@ -96,10 +96,13 @@ Two passes over the cached syntax trees:
    - A route on a router that is never mounted is listed with its own path (no prefix).
    - A path that isn't a string literal or a template string without expressions becomes `Not Found (dynamic)`.
    - Cycles in the mount graph are detected and the cycle is broken with a warning.
+   - Supported module forms: direct default/named exports, `module.exports =`, `require()`, and **one hop** of re-export (`export { r } from`). Deeper re-export chains produce a warning and the routes are listed unprefixed (DR-15).
 
 ### 5.4 Env var "required" rule (FR-11)
-For each use, `required = true` unless the `process.env.X` member expression is the left operand of `||` or `??`,
-the test of a conditional (`process.env.X ? … : …`), or a destructured property with a default value (`const { X = 'd' } = process.env`).
+For each use, `required = true` unless the `process.env.X` member expression is the left operand of `||` or `??`, the target of
+`||=` / `??=`, or a destructured property with a default value (`const { X = 'd' } = process.env`). Conditional tests and guards
+(`if (!process.env.X) throw …`) **do not** count as fallbacks, because they signal that the variable is required (DR-1). Dynamic keys (`process.env[name]`)
+are skipped with a debug note; `import.meta.env` is out of scope (DR-10).
 A variable is **Required = Yes** if *any* use is required. A variable found only in `.env.example` shows "Used in: `Not Found`" and "Required: `Not Found`".
 
 ### 5.5 Data flow — `docsync check` (local)
@@ -130,10 +133,12 @@ sequenceDiagram
   participant G as GitHubSource (C-5)
   participant API as GitHub REST API
   G->>API: GET /repos/{o}/{r}  (metadata, default branch)
-  G->>API: GET /repos/{o}/{r}/git/trees/{ref}?recursive=1
-  Note over G: apply scan scope (C-7): manifests + JS/TS sources only
+  G->>API: GET /repos/{o}/{r}/commits/{ref}  (resolve to SHA once)
+  G->>API: GET /repos/{o}/{r}/git/trees/{sha}?recursive=1
+  Note over G: truncated → exit 3; apply scope (C-7); skip symlinks/submodules/>1 MB
+  Note over G: quota pre-check vs x-ratelimit-remaining → fail fast
   loop in-scope files (max 8 concurrent)
-    G->>API: GET /repos/{o}/{r}/contents/{path}?ref={ref}
+    G->>API: GET /repos/{o}/{r}/git/blobs/{blobSha}
   end
   G->>API: GET /repos/{o}/{r}/releases/latest (404 → Not Found)
 ```
@@ -148,7 +153,7 @@ sequenceDiagram
 | Config validation | zod | 4.x | Strict schemas with readable errors |
 | GitHub API | @octokit/rest + plugin-throttling + plugin-retry | 22.x / 11.x / 8.x | Official client; rate-limit and retry handling (FR-21) |
 | Parsing | @babel/parser + @babel/traverse | 7.29.x | Babel 8 isn't on the `latest` tag yet; 7.29 is the stable line and supports TS and JSX |
-| File walking / ignores | fast-glob, ignore | 3.x / 7.x | Fast cross-platform globbing; `.gitignore` semantics |
+| File walking / ignores | Node `fs` (recursive readdir) + ignore | — / 7.x | No glob dependency needed (DR-14); `ignore` gives `.gitignore` semantics |
 | Diffs | diff | 9.x | Unified diffs for the drift report |
 | Tests | vitest + @vitest/coverage-v8 | 5.x | TypeScript-native and fast; coverage built in |
 | Lint / format | eslint + typescript-eslint, prettier | 10.x / 8.x / 3.x | Code-quality checklist |
@@ -209,6 +214,9 @@ tests/
 - **Integration tests:** whole commands against fixture repositories in `tests/fixtures/` (express-basic, no-license, empty, malformed-markers, with-dotenv) through LocalSource; GitHubSource through a fake `fetch` injected into Octokit (`request.fetch`), so there is **no network access** in tests (NFR-9).
 - **Security tests:** a sentinel value in a fixture `.env` must not appear in any output (NFR-1); a token set together with forced API errors must not appear in any output (NFR-2).
 - **Performance test:** a generated 500-file fixture syncs in under 10 s (NFR-5).
+- **Contract test:** the same fixture rendered through LocalSource and GitHubSource (fake fetch) gives byte-equal output (DR-16).
+- **Golden tests:** a README with BOM + CRLF and mixed EOLs survives `sync` byte for byte outside the blocks (DR-6).
+- **Secret sentinels:** in `.env`, `.env.example` values and code fallbacks (DR-2).
 
 ## 12. Traceability
 | Requirement | Component(s) |
@@ -247,6 +255,7 @@ Every FR and NFR maps to at least one component; no gaps.
 
 ## 13. Known risks (input to the design review)
 - Static route resolution misses routes registered in loops or through helper functions; these are documented as a limitation.
+- Lockfile v1 isn't parsed; declared ranges are used with a warning (DR-11).
 - The Git Trees API truncates very large trees (> 100k entries / 7 MB); this produces a warning, and the result may be incomplete.
 - Anonymous remote mode exhausts the 60-requests-per-hour limit on repos with more than about 55 source files, so a token is needed.
 
@@ -254,3 +263,4 @@ Every FR and NFR maps to at least one component; no gaps.
 | Date | Change | Reason |
 |------|--------|--------|
 | 2026-10-01 | Initial version | Phase 2 |
+| 2026-10-01 | Revision 2: env "required" rule fixed; `.env.example` names-only; no code frames or literals; remote reads blobs by commit SHA, quota pre-check, truncation = error, skip symlinks/submodules/>1 MB; BOM + per-block EOL; Windows rename retry; init non-TTY guard; summary cap; empty list = Not Found; one-hop re-exports; drop fast-glob; contract/golden/sentinel tests | DR-1 … DR-16 (docs/design-review.md) |
