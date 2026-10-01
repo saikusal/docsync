@@ -10,12 +10,12 @@ import {
   type ResolvedConfig,
 } from '../config/config.js';
 import { writeFileAtomic } from '../infra/atomicWrite.js';
-import { SourceError } from '../infra/errors.js';
+import { DocsyncError, SourceError } from '../infra/errors.js';
 import { decodeReadme, encodeReadme, type ReadmeText } from '../markers/markers.js';
 import { GitHubSource, createMetadataProvider } from '../sources/github.js';
 import { createGitHubClient } from '../sources/githubClient.js';
 import { LocalSource } from '../sources/local.js';
-import type { RepoSource } from '../sources/types.js';
+import type { MetadataProvider, RepoSource } from '../sources/types.js';
 import type { Runtime } from './runtime.js';
 
 /** A resolved target: where facts come from, and how the README is read and written. */
@@ -56,6 +56,21 @@ function outputWriter(config: ResolvedConfig, runtime: Runtime) {
   };
 }
 
+/** GitHub metadata is optional in local mode: a failure becomes a warning and the fields show Not Found (CR-2). */
+function optionalMetadata(provider: MetadataProvider, runtime: Runtime): MetadataProvider {
+  return async (repo) => {
+    try {
+      return await provider(repo);
+    } catch (error) {
+      const reason = error instanceof DocsyncError ? error.message : String(error);
+      runtime.logger.warn(
+        `could not read GitHub metadata for ${repo.owner}/${repo.repo} (${reason}); GitHub-only fields will show Not Found`,
+      );
+      return null;
+    }
+  };
+}
+
 export async function openTarget(cli: CliOptions, runtime: Runtime): Promise<OpenTarget> {
   const target = resolveTarget(cli);
   const token = runtime.env.GITHUB_TOKEN || undefined;
@@ -68,7 +83,7 @@ export async function openTarget(cli: CliOptions, runtime: Runtime): Promise<Ope
     const source = await LocalSource.create(target.root, {
       include: config.include,
       exclude: config.exclude,
-      metadataProvider: token ? createMetadataProvider(client()) : undefined,
+      metadataProvider: token ? optionalMetadata(createMetadataProvider(client()), runtime) : undefined,
     });
     const readmePath = path.join(target.root, ...config.readme.split('/'));
     return {

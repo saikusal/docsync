@@ -1,5 +1,6 @@
 import { NOT_FOUND, firstFound, fmt, maybe, type Maybe } from '../core/facts.js';
 import { cell, code, table } from '../core/markdown.js';
+import { LICENSE_FILES } from '../scope/scope.js';
 import { defineSection } from './types.js';
 
 export interface OverviewFacts {
@@ -11,8 +12,6 @@ export interface OverviewFacts {
   topics: Maybe<string[]>;
   latestRelease: Maybe<string>;
 }
-
-const LICENSE_FILES = ['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'LICENCE', 'LICENCE.md', 'LICENCE.txt'];
 
 const LICENSE_SIGNATURES: [RegExp, string][] = [
   [/^\s*MIT License/i, 'MIT'],

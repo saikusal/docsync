@@ -63,7 +63,7 @@ export async function initCommand(cli: CliOptions, runtime: Runtime): Promise<nu
     next = { text: createReadme(name, config.sections), hasBom: false };
     added = [...config.sections];
   } else {
-    const result = insertMissingBlocks(existing.text, config.sections);
+    const result = insertMissingBlocks(existing.text, config.sections, config.readme);
     next = { text: result.text, hasBom: existing.hasBom };
     added = result.added;
   }
@@ -96,8 +96,9 @@ export async function syncCommand(cli: CliOptions, runtime: Runtime): Promise<nu
 
   if (drift.length === 0) {
     runtime.logger.info(`${target.config.readme} is already up to date; no changes.`);
-    // Remote mode never writes to GitHub; the unchanged README still goes to --out/stdout so piping works.
-    if (target.config.target.kind === 'remote') await target.writeReadme(readme);
+    // --out (and remote mode, which never writes to GitHub) always receives the result, so piping works (CR-4).
+    if (target.config.out !== undefined || target.config.target.kind === 'remote')
+      await target.writeReadme(readme);
     return ExitCode.Ok;
   }
   const updated: ReadmeText = { text: replaceBlocks(readme.text, blocks, rendered), hasBom: readme.hasBom };

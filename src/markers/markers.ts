@@ -211,8 +211,9 @@ function blockSkeleton(section: SectionId, eol: string): string {
 export function insertMissingBlocks(
   text: string,
   sections: readonly SectionId[],
+  readmeName = 'README.md',
 ): { text: string; added: SectionId[] } {
-  const present = new Set(requireMarkers(text, 'README').map((block) => block.section));
+  const present = new Set(requireMarkers(text, readmeName).map((block) => block.section));
   const added = sections.filter((section) => !present.has(section));
   if (added.length === 0) return { text, added };
 

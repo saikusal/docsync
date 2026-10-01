@@ -8,6 +8,8 @@ const EXCLUDED_DIRS = ['node_modules', '.git', 'dist', 'build', 'coverage', '.ne
 /** Test code is listed (it shows up in the project structure) but is not analysed for env vars or routes. */
 const TEST_PATTERNS = ['*.test.*', '*.spec.*', '__tests__/', 'test/', 'tests/', '__mocks__/'];
 
+export const LICENSE_FILES = ['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'LICENCE', 'LICENCE.md', 'LICENCE.txt'];
+
 /** Root files that sections read even though they are not source code. */
 const MANIFESTS = new Set([
   'package.json',
@@ -15,12 +17,7 @@ const MANIFESTS = new Set([
   '.env.example',
   '.gitignore',
   'docsync.config.json',
-  'LICENSE',
-  'LICENSE.md',
-  'LICENSE.txt',
-  'LICENCE',
-  'LICENCE.md',
-  'LICENCE.txt',
+  ...LICENSE_FILES,
 ]);
 
 const ENV_FILE = /^\.env(\..+)?$/;

@@ -1,5 +1,6 @@
 import type { NodePath } from '@babel/traverse';
 import * as t from '@babel/types';
+import { staticKey } from './ast.js';
 import { traverse } from './traverse.js';
 
 export interface EnvUsage {
@@ -24,13 +25,6 @@ function isProcessEnv(node: t.Node): boolean {
   return node.computed
     ? t.isStringLiteral(node.property, { value: 'env' })
     : t.isIdentifier(node.property, { name: 'env' });
-}
-
-function staticKey(node: t.Node, computed: boolean): string | null {
-  if (!computed && t.isIdentifier(node)) return node.name;
-  if (t.isStringLiteral(node)) return node.value;
-  if (t.isTemplateLiteral(node) && node.expressions.length === 0) return node.quasis[0]?.value.cooked ?? null;
-  return null;
 }
 
 /**

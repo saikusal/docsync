@@ -1,5 +1,6 @@
 import path from 'node:path';
 import * as t from '@babel/types';
+import { staticKey, staticString } from './ast.js';
 import { traverse } from './traverse.js';
 
 export const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'all'] as const;
@@ -48,18 +49,8 @@ export interface RouteScan {
   warnings: string[];
 }
 
-function staticString(node: t.Node | undefined): Segment {
-  if (!node) return null;
-  if (t.isStringLiteral(node)) return node.value;
-  if (t.isTemplateLiteral(node) && node.expressions.length === 0) return node.quasis[0]?.value.cooked ?? null;
-  return null;
-}
-
 function propertyName(node: t.MemberExpression): string | null {
-  return (
-    staticString(node.property) ??
-    (!node.computed && t.isIdentifier(node.property) ? node.property.name : null)
-  );
+  return staticKey(node.property, node.computed);
 }
 
 /** `express()`, `express.Router()`, `Router()`, `require('express')()`, `new Router()`. */
@@ -207,13 +198,22 @@ function collect(file: string, ast: t.File): FileFacts {
 
       if (method === 'use' && args.length > 0) {
         const first = args[0];
-        const hasPrefix = t.isStringLiteral(first) || t.isTemplateLiteral(first);
-        const prefix: Segment = hasPrefix ? staticString(first) : '';
+        const hasPrefix =
+          t.isStringLiteral(first) || t.isTemplateLiteral(first) || t.isArrayExpression(first);
+        // app.use(['/a', '/b'], router) mounts the router at every listed path (CR-3).
+        const prefixes: Segment[] = !hasPrefix
+          ? ['']
+          : t.isArrayExpression(first)
+            ? first.elements.map((element) => staticString(element))
+            : [staticString(first)];
         for (const arg of hasPrefix ? args.slice(1) : args) {
-          if (t.isIdentifier(arg))
-            facts.mounts.push({ receiver, prefix, child: { kind: 'name', name: arg.name } });
           const source = requireSource(arg);
-          if (source) facts.mounts.push({ receiver, prefix, child: { kind: 'require', source } });
+          const child: MountDecl['child'] | null = t.isIdentifier(arg)
+            ? { kind: 'name', name: arg.name }
+            : source
+              ? { kind: 'require', source }
+              : null;
+          if (child) for (const prefix of prefixes) facts.mounts.push({ receiver, prefix, child });
         }
       }
     },

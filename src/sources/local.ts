@@ -33,6 +33,7 @@ export class LocalSource implements RepoSource {
   readonly label: string;
   readonly defaultName: string;
   private files: Promise<string[]> | null = null;
+  private listed: Promise<Set<string>> | null = null;
 
   private constructor(
     private readonly root: string,
@@ -52,6 +53,11 @@ export class LocalSource implements RepoSource {
     return new LocalSource(absolute, scope, options.metadataProvider);
   }
 
+  private listedSet(): Promise<Set<string>> {
+    this.listed ??= this.listFiles().then((files) => new Set(files));
+    return this.listed;
+  }
+
   listFiles(): Promise<string[]> {
     this.files ??= this.walk('').then((files) => files.sort());
     return this.files;
@@ -59,7 +65,8 @@ export class LocalSource implements RepoSource {
 
   async readFile(file: string): Promise<string | null> {
     const relative = toSafeRelative(file);
-    if (relative === null || !this.scope.isListed(relative)) return null;
+    // Only files in the listing are served; the walk skips symlinks, so nothing outside the root can be read (CR-1).
+    if (relative === null || !(await this.listedSet()).has(relative)) return null;
     const absolute = path.resolve(this.root, relative);
     if (!absolute.startsWith(this.root + path.sep)) return null;
     return readOptional(absolute);
