@@ -63,8 +63,8 @@ flowchart LR
 **Can run in parallel:** {T-3, T-4, T-7, T-14} after T-2; {T-5, T-9} after T-1; T-10 alongside T-6/T-11.
 
 ## Progress
-- [ ] T-1 · [ ] T-2 · [ ] T-3 · [ ] T-4 · [ ] T-5 · [ ] T-6 · [ ] T-7 · [ ] T-8 · [ ] T-9
-- [ ] T-10 · [ ] T-11 · [ ] T-12 · [ ] T-13 · [ ] T-14 · [ ] T-15 · [ ] T-16 · [ ] T-17 · [ ] T-18
+- [x] T-1 · [x] T-2 · [x] T-3 · [x] T-4 · [x] T-5 · [x] T-6 · [x] T-7 · [x] T-8 · [x] T-9
+- [x] T-10 · [x] T-11 · [x] T-12 · [x] T-13 · [x] T-14 · [x] T-15 · [x] T-16 · [x] T-17 · [x] T-18
 
 ## Risks
 | Risk | Mitigation |
@@ -81,3 +81,10 @@ named tests. This repo's own README is managed by docsync and passes `check`. Co
 ## Delegated decisions
 - The task granularity and order above were chosen by the agent under saikusal's delegation of 2026-10-01.
 - Per-task diffs are approved under the same delegation (Phase 5); each task is still its own commit for traceability.
+
+## Implementation notes (Phase 5)
+- T-7: a request-level `retries` option made the throttling plugin retry primary rate-limit errors; retries are now configured only via the retry plugin (test: "reports when the rate limit resets", 1 request).
+- T-8: `.gitignore` was downloaded twice; fixed. Added a `configure` hook so a repository's own `docsync.config.json` and README apply in remote mode (FR-2).
+- T-15: AC7 found an ordering bug: the README check ran before the empty-repository check. Fixed so all three commands report "repository … is empty" (exit 3).
+- T-17: dogfooding moved CLI env access to an explicit allowlist (`GITHUB_TOKEN`, `GITHUB_STEP_SUMMARY`), so docsync documents its own variables. This repo's `docsync.config.json` uses `include: ["src/**"]` so Claude tooling isn't documented as app code.
+- `npm audit`: 1 **low** advisory in `esbuild` (dev-only, through tsup/vitest; affects esbuild's dev server, which isn't used). NFR-12 (no high/critical) is met.
