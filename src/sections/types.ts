@@ -20,7 +20,8 @@ export interface SectionContext {
   packageJson: PackageJson | null;
   /** Resolved dependency versions from the lockfile, or null when unavailable. */
   lockedVersions: ReadonlyMap<string, string> | null;
-  metadata: RepoMetadata | null;
+  /** GitHub metadata, fetched on first use only (memoised), so sections that do not need it make no API calls. */
+  metadata(): Promise<RepoMetadata | null>;
   /** Names from .env.example (never values), or null when the file is absent. */
   envExampleKeys: readonly string[] | null;
   /** Parses source files once and runs the env and route analysers (memoised). */

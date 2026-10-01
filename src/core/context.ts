@@ -7,7 +7,7 @@ import type { Logger } from '../infra/logger.js';
 import { parseEnvExampleKeys } from '../scope/envExample.js';
 import { createScope, type ScopeOptions } from '../scope/scope.js';
 import type { Analysis, SectionContext } from '../sections/types.js';
-import type { RepoSource } from '../sources/types.js';
+import type { RepoMetadata, RepoSource } from '../sources/types.js';
 import { parseLockfileVersions, parsePackageJson } from './packageJson.js';
 
 const PARSE_CONCURRENCY = 16;
@@ -32,8 +32,14 @@ async function analyse(
       logger.warn(`skipping ${file}:${result.error.line}:${result.error.column}: ${result.error.message}`);
       continue;
     }
+    let scan: EnvScan;
+    try {
+      scan = findEnvUsages(file, result.ast);
+    } catch (error) {
+      logger.warn(`skipping ${file}: ${(error as Error).message}`);
+      continue;
+    }
     asts.set(file, result.ast);
-    const scan = findEnvUsages(file, result.ast);
     env.usages.push(...scan.usages);
     env.dynamicKeys.push(...scan.dynamicKeys);
   }
@@ -70,6 +76,7 @@ export async function buildContext(
 
   const envExample = await source.readFile('.env.example');
   let analysis: Promise<Analysis> | null = null;
+  let metadata: Promise<RepoMetadata | null> | null = null;
 
   return {
     source,
@@ -77,7 +84,7 @@ export async function buildContext(
     sourceFiles,
     packageJson,
     lockedVersions,
-    metadata: await source.getMetadata(),
+    metadata: () => (metadata ??= source.getMetadata()),
     envExampleKeys: envExample === null ? null : parseEnvExampleKeys(envExample),
     analysis: () => (analysis ??= analyse(source, sourceFiles, logger)),
     readFile: (file) => source.readFile(file),

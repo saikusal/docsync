@@ -20,6 +20,7 @@ export function table(headers: readonly string[], rows: readonly (readonly strin
   return [line(headers), line(headers.map(() => '---')), ...rows.map(line)].join('\n');
 }
 
+/** Sorts by UTF-16 code unit: identical on every OS, locale and Node.js version (IDR-16). */
 export function compareText(a: string, b: string): number {
-  return a.localeCompare(b, 'en');
+  return a < b ? -1 : a > b ? 1 : 0;
 }

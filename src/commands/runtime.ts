@@ -10,5 +10,7 @@ export interface Runtime {
   /** Replaces the network for GitHub calls in tests. */
   fetch?: typeof globalThis.fetch;
   appendFile: (file: string, text: string) => Promise<void>;
-  writeFile: (file: string, text: string) => Promise<void>;
+  writeFile: (file: string, data: string | Uint8Array) => Promise<void>;
+  /** Masks the token and token-shaped strings; applied to every output that bypasses the logger (ICR-3). */
+  redact: (text: string) => string;
 }

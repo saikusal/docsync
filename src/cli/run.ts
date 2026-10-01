@@ -55,7 +55,8 @@ export async function run(argv: readonly string[], options: RunOptions = {}): Pr
   const stderr = options.stderr ?? process.stderr;
   const debug = argv.includes('--debug');
   // GITHUB_TOKEN is read from the environment only and masked in every line of output (NFR-2).
-  const logger = createLogger({ redact: createRedactor([env.GITHUB_TOKEN]), debug, stdout, stderr });
+  const redact = createRedactor([env.GITHUB_TOKEN]);
+  const logger = createLogger({ redact, debug, stdout, stderr });
   const runtime: Runtime = {
     logger,
     env,
@@ -63,7 +64,8 @@ export async function run(argv: readonly string[], options: RunOptions = {}): Pr
     confirm: options.confirm ?? askOnStdin,
     fetch: options.fetch,
     appendFile: (file, text) => fs.appendFile(file, text),
-    writeFile: (file, text) => fs.writeFile(file, text),
+    writeFile: (file, data) => fs.writeFile(file, data),
+    redact,
   };
 
   let exitCode: number = ExitCode.Ok;

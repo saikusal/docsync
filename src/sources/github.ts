@@ -165,7 +165,8 @@ export class GitHubSource implements RepoSource {
       const file = entry.path as string;
       if (file === '.gitignore' || file === CONFIG_FILE_NAME) return false;
       if (!scope.isSource(file) && !scope.isManifest(file) && !extra.has(file)) return false;
-      if ((entry.size ?? 0) > MAX_FILE_BYTES) {
+      // Manifests (e.g. a large package-lock.json) are always read, so remote output equals local output (IDR-12).
+      if (!scope.isManifest(file) && (entry.size ?? 0) > MAX_FILE_BYTES) {
         logger.warn(`skipping ${file}: larger than 1 MB (probably generated)`);
         return false;
       }

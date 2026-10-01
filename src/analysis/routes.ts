@@ -232,7 +232,13 @@ export function joinPaths(...segments: string[]): string {
 export function analyseRoutes(files: ReadonlyMap<string, t.File>): RouteScan {
   const warnings: string[] = [];
   const facts = new Map<string, FileFacts>();
-  for (const [file, ast] of files) facts.set(file, collect(file, ast));
+  for (const [file, ast] of files) {
+    try {
+      facts.set(file, collect(file, ast));
+    } catch (error) {
+      warnings.push(`skipping ${file} for route detection: ${(error as Error).message}`);
+    }
+  }
 
   const resolveModule = (from: string, specifier: string): string | null => {
     if (!specifier.startsWith('.')) return null;

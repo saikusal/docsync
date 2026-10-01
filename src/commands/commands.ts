@@ -117,6 +117,15 @@ export async function checkCommand(cli: CliOptions, runtime: Runtime): Promise<n
 
   runtime.logger.result(`${formatTerminalReport(drift, target.config.readme)}\n`);
   const summaryFile = runtime.env.GITHUB_STEP_SUMMARY;
-  if (summaryFile) await runtime.appendFile(summaryFile, formatSummaryReport(drift, target.config.readme));
+  if (summaryFile) {
+    try {
+      await runtime.appendFile(summaryFile, runtime.redact(formatSummaryReport(drift, target.config.readme)));
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException)?.code ?? 'unknown error';
+      runtime.logger.warn(
+        `could not write the job summary to GITHUB_STEP_SUMMARY (${code}); the report above is complete`,
+      );
+    }
+  }
   return drift.length === 0 ? ExitCode.Ok : ExitCode.Drift;
 }
