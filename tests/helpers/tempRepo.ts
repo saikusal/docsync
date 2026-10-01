@@ -12,3 +12,21 @@ export async function createTempRepo(files: Record<string, string | Uint8Array>)
   }
   return root;
 }
+
+/** Reads a directory tree into a relative-path → content map. */
+export async function readTree(root: string, dir = ''): Promise<Record<string, string>> {
+  const { readdir, readFile } = await import('node:fs/promises');
+  const files: Record<string, string> = {};
+  for (const entry of await readdir(path.join(root, dir), { withFileTypes: true })) {
+    const relative = dir ? `${dir}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) Object.assign(files, await readTree(root, relative));
+    else files[relative] = await readFile(path.join(root, relative), 'utf8');
+  }
+  return files;
+}
+
+/** Copies a fixture from tests/fixtures into a fresh temporary directory, with optional extra files. */
+export async function copyFixture(name: string, extra: Record<string, string> = {}): Promise<string> {
+  const source = path.join(import.meta.dirname, '..', 'fixtures', name);
+  return createTempRepo({ ...(await readTree(source)), ...extra });
+}
