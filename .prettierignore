@@ -1,0 +1,13 @@
+dist/
+coverage/
+node_modules/
+tests/fixtures/
+docs/
+.claude/
+CHANGELOG.md
+README.md
+user-story/
+package-lock.json
+.github/pull_request_template.md
+*.md
+.claude/
