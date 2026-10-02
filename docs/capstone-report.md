@@ -83,7 +83,8 @@ produced a committed artifact. The product works: it is tested on Windows and Li
    hook does not block. This was discovered in Phase 7 (V-2) and fixed by renaming them to `.cjs`. Lint, typecheck and tests were run
    by hand before every commit, so no untested code was committed.
 4. **Delegated approvals.** For Phases 3 to 7 the human said "go ahead with your recommendations". Each artifact records this as
-   `saikusal (delegated)`. The human approved Phases 1 and 2, the requirement change, and all pushes, merges and releases.
+   `saikusal (delegated)`. The human approved Phases 1 and 2, the requirement change, and all pushes, merges and releases, and on
+   2026-10-02 explicitly approved the independent review dispositions and architecture revision 3 (IDR-22).
 5. **Skills mostly followed rather than invoked.** The phase skills are set to run only when the human types them. After Phase 1 the
    human asked the agent to continue, so the agent followed each skill file directly.
 6. **The user story was drafted by the agent.** The brief contains no story and none existed in JIRA, Confluence or Word, so the agent
@@ -93,8 +94,10 @@ produced a committed artifact. The product works: it is tested on Windows and Li
 
 | Item | Owner | Notes |
 |------|-------|-------|
-| Re-approve the architecture after the independent review (IDR-22) | Human | Read `docs/independent-review.md` and confirm the dispositions |
 | Deferred minor findings | Backlog | Listed as Deferred in `docs/independent-review.md` |
+
+**Human re-approval (IDR-22):** on 2026-10-02 saikusal explicitly approved every disposition in `docs/independent-review.md`, which
+also re-approves architecture revision 3. This closes the gap left by the delegated approvals for Phases 3 to 7.
 
 **Done after the report was first written:** published to npm as `@saikusal/docsync@0.1.2` on 2026-10-01 by the human
 (npm requires two-factor authentication for publishing). The published shasum `44c21049...` matches the tested local build, and
