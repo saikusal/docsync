@@ -1,7 +1,7 @@
 # Architecture — Docs Sync (DOCS-101)
 
 > **Status:** Approved
-> **Approved by:** saikusal on 2026-10-01; revision 2 (design review) saikusal (delegated) on 2026-10-01
+> **Approved by:** saikusal on 2026-10-01; revision 2 (design review) saikusal (delegated) on 2026-10-01; revision 3 (independent review) saikusal on 2026-10-02
 > **Inputs:** docs/requirements.md (Approved, incl. 2026-10-01 NFR-7 amendment)
 
 ## 1. Context and goals

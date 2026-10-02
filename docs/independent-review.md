@@ -1,7 +1,7 @@
 # Independent Agent Review
 
 > **Status:** Approved
-> **Approved by:** saikusal (delegated) on 2026-10-01
+> **Approved by:** saikusal on 2026-10-02 (explicit human approval of all dispositions; closes IDR-22)
 > **Inputs:** docs/requirements.md, docs/architecture.md, src/, tests/, tests/output/express-app.README.md, README.md at release v0.1.1 (commit 74b00b5)
 
 ## Why this review exists
@@ -74,7 +74,7 @@ on Windows because creating symbolic links there needs extra privileges (both ru
 | IDR-19 | Minor | tsup maintenance status; Babel 8 migration later | Noted as technology risk; deferred |
 | IDR-20 | Minor | Hidden globals (clock, TZ) | Mostly injected already (env, TTY, fetch, confirm). The clock is deferred |
 | IDR-21 | Minor | Interplay of the throttling and retry plugins | **Already handled:** the primary rate limit fails fast (`onRateLimit` returns false), and a T-7 bug fix removed an extra retry |
-| IDR-22 | Minor | Phase 3 to 7 approvals were delegated, and no human re-approved the changes after review | **Open: needs the human.** See the capstone report |
+| IDR-22 | Minor | Phase 3 to 7 approvals were delegated, and no human re-approved the changes after review | **Closed.** On 2026-10-02 saikusal reviewed this document and explicitly approved every disposition above, which also re-approves architecture revision 3 |
 
 ## Output document findings (IDQ)
 
@@ -86,4 +86,4 @@ on Windows because creating symbolic links there needs extra privileges (both ru
 
 ## Result
 All Major findings have been fixed in code (ICR-1, ICR-2, IDR-4, IDR-12), were already handled by the implementation (IDR-1, 5, 6, 7, 9),
-or are documented known limitations (IDR-2, 8, 18). One item needs a person: IDR-22 (human re-approval).
+or are documented known limitations (IDR-2, 8, 18). IDR-22 is closed: the human approved all dispositions on 2026-10-02.
