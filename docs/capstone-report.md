@@ -3,29 +3,42 @@
 **Project:** docsync, which keeps a repository's README in sync with its code (user story DOCS-101)
 **Repository:** https://github.com/saikusal/docsync
 **Releases:** v0.1.0 (first release), v0.1.1 (npm packaging), v0.1.2 (independent review fixes)
+**npm:** [`@saikusal/docsync`](https://www.npmjs.com/package/@saikusal/docsync), version 0.1.2, published 2026-10-01 (`npx @saikusal/docsync check`)
 **Author:** saikusal, with Claude Code as the agent
 
 This report maps every step of the capstone brief (`copilot-claude-cursor-capstone-project.docx`) to the evidence in the repository,
 and states honestly where the process differed from the brief. An evaluator can start here.
 
+## 0. The product in brief
+
+**Problem.** README files go stale: developers change environment variables, API routes and npm scripts, and the docs stay behind.
+New contributors follow wrong instructions, and reviewers cannot see that a change broke the docs.
+
+**Solution.** docsync reads those facts from the code (no guessing, no AI, never any secret values) and keeps marked README sections up
+to date. `docsync check` in CI fails a pull request whose code change made the README wrong, so stale docs cannot be merged.
+
+**Use.** In any JavaScript or TypeScript project with Node.js 22.12 or newer: `npx @saikusal/docsync init`, then `sync`, then add
+`npx @saikusal/docsync check` to CI. Full instructions are in the README.
+
 ## 1. Summary
 The brief asks for an Agentic SDLC pipeline, from requirements to a merged pull request, driven by an AI agent through agents,
 prompts, instructions, skills and hooks, with a human in the loop. All eight steps were completed with **Claude Code**. Each step
 produced a committed artifact. The product works: it is tested on Windows and Linux with Node.js 22 and 24, it dogfoods itself
-(this repository's README is generated and checked by docsync), and it is released on GitHub.
+(this repository's README is generated and checked by docsync), and it is released on GitHub and published on npm as
+`@saikusal/docsync`, so any JavaScript or TypeScript project can use it with `npx @saikusal/docsync`.
 
 ## 2. Step by step
 
 | # | Brief | Done | Evidence |
 |---|-------|------|----------|
-| 1 | Read a user story; the AI asks clarifying questions and the human answers; capture `requirements.md` and commit it | Yes | `user-story/DOCS-101-docs-sync.md`; 12 questions asked with the question tool and answered by the human (log in `docs/requirements.md` §6); 24 FR, 12 NFR; commit `c23c39c` |
+| 1 | Read a user story; the AI asks clarifying questions and the human answers; capture `requirements.md` and commit it | Yes | `user-story/DOCS-101-docs-sync.md`; 12 questions asked with the question tool and answered by the human (log in `docs/requirements.md` section 6); 24 FR, 12 NFR; commit `c23c39c` |
 | 2 | Architecture: components, technology choices, data flow, in `architecture.md` | Yes | `docs/architecture.md`: 2 approaches offered and the human chose; 15 components; 3 Mermaid diagrams; traceability matrix. Version check against npm found Node 20 end of life, and the human approved Node 22.12 |
 | 3 | Design review: risks and gaps in `design-review.md`; update the architecture | Yes | `docs/design-review.md` (17 findings, 16 applied as architecture revision 2) **plus** `docs/independent-review.md` (22 findings by the independent design-reviewer agent, architecture revision 3) |
 | 4 | Implementation plan, ordered by dependency, with blocked tasks | Yes | `docs/impl-plan.md`: 18 tasks, a dependency graph, a blocked-task table and the tasks that can run in parallel |
 | 5 | Implementation approved by the human in the loop | Yes | 18 `impl(T-n)` commits, each tested before commit; notes on the problems found during implementation in `docs/impl-plan.md` |
 | 6 | Code review against the 7-point checklist | Yes | `docs/code-review.md` (all 7 areas, 10 findings, 4 bugs fixed with failing-first tests) **plus** `docs/independent-review.md` (code-reviewer agent: 18 findings, 2 Major fixed) |
 | 7 | Verify the code (unit and integration) and the output document | Yes | `docs/verification.md`: test run, coverage, requirement to test matrix, a real GitHub API smoke test, and a 7-point quality check of `tests/output/express-app.README.md`; confirmed by the doc-quality-checker agent (17 facts checked, all correct) |
-| 8 | PR through agent mode with description, changelog and reviewer checklist (5 required sections) | Yes | [PR #1](https://github.com/saikusal/docsync/pull/1) with Summary, Changes Made, Test Evidence, Known Limitations and Reviewer Checklist; `CHANGELOG.md`; all CI checks green; merged. Follow-up PRs #2, #3 and #4 |
+| 8 | PR through agent mode with description, changelog and reviewer checklist (5 required sections) | Yes | [PR #1](https://github.com/saikusal/docsync/pull/1) with Summary, Changes Made, Test Evidence, Known Limitations and Reviewer Checklist; `CHANGELOG.md`; all CI checks green; merged. Follow-up PRs #2 (README and CI limits), #3 (npm packaging), #4 (independent review fixes) and #5 (npm usage docs) |
 
 ## 3. How the agentic features were used
 
@@ -81,8 +94,13 @@ produced a committed artifact. The product works: it is tested on Windows and Li
 | Item | Owner | Notes |
 |------|-------|-------|
 | Re-approve the architecture after the independent review (IDR-22) | Human | Read `docs/independent-review.md` and confirm the dispositions |
-| Publish to npm | Human | `npm publish` needs two-factor authentication on the npm account; the package `@saikusal/docsync` is ready |
 | Deferred minor findings | Backlog | Listed as Deferred in `docs/independent-review.md` |
+
+**Done after the report was first written:** published to npm as `@saikusal/docsync@0.1.2` on 2026-10-01 by the human
+(npm requires two-factor authentication for publishing). The published shasum `44c21049...` matches the tested local build, and
+`npx @saikusal/docsync` was verified from a clean folder against the sample project. Automatic publishing through npm trusted
+publishing (OIDC from GitHub Actions) was considered and left out on purpose: releases are rare, and a manual publish with 2FA
+is enough.
 
 ## 7. Lessons learned
 - **Independent review is worth its cost.** The author reviewed its own work three times and still missed a secret-file read that a

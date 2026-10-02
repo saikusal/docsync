@@ -1,16 +1,67 @@
 # docsync
 
+[![npm](https://img.shields.io/npm/v/@saikusal/docsync)](https://www.npmjs.com/package/@saikusal/docsync)
+[![CI](https://github.com/saikusal/docsync/actions/workflows/ci.yml/badge.svg)](https://github.com/saikusal/docsync/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/@saikusal/docsync)](LICENSE)
+
 **Keep your README in sync with your code, automatically.**
 
-docsync is a small command line tool for JavaScript and TypeScript projects. It reads the facts that already exist in your
-code (environment variables, API routes, npm scripts, dependencies, license, folder layout) and writes them into your README.
-In CI it fails the build when a code change makes the README wrong, so out of date documentation can no longer reach your
-main branch.
+## In one minute
+
+### The problem it solves
+
+Code changes every day; the README does not. Someone adds a required environment variable, a new API route or a new npm
+script, and forgets the docs. The next person follows the README, the app fails, and time is lost. Nobody notices in code
+review, because nothing shows that the README is now wrong.
+
+### What docsync does about it
+
+docsync reads the facts that already exist in your code and writes them into marked sections of your README:
+
+- the **environment variables** your code reads, and whether each one is required
+- the **API endpoints** (Express routes, with their full paths)
+- the **setup steps**: Node.js version, install command and npm scripts
+- the **tech stack**, the **project overview** and the **folder structure**
+
+In CI, `docsync check` fails the build when a change makes the README wrong and shows exactly which lines to update.
+Out of date documentation can no longer reach your main branch.
 
 - It only edits the parts of the README you mark for it. Your own writing is never touched.
 - It never guesses. Anything it cannot determine is written as `Not Found`.
 - It never reads your secrets. `.env` files are never opened, and only variable names are documented.
 - It needs no AI model, no database, no server and no paid service.
+
+### How to use it
+
+You need Node.js 22.12 or newer. In the root folder of your JavaScript or TypeScript project:
+
+```sh
+npx @saikusal/docsync init     # 1. add the section markers to your README (asks first)
+npx @saikusal/docsync sync     # 2. fill them in from your code, then commit the README
+npx @saikusal/docsync check    # 3. later, or in CI: is the README still correct?
+```
+
+To check every pull request automatically, add this file to your project as `.github/workflows/docs.yml`:
+
+```yaml
+name: docs
+on: pull_request
+permissions:
+  contents: read
+jobs:
+  docs-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: npx --yes @saikusal/docsync check
+```
+
+When a pull request changes the code but not the docs, this job fails and prints the missing lines. The fix is always the
+same: run `npx @saikusal/docsync sync` and commit. The rest of this page explains every detail.
 
 ## Contents
 
