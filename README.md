@@ -1,4 +1,4 @@
-# docsync
+# Docsync
 
 [![npm](https://img.shields.io/npm/v/@saikusal/docsync)](https://www.npmjs.com/package/@saikusal/docsync)
 [![CI](https://github.com/saikusal/docsync/actions/workflows/ci.yml/badge.svg)](https://github.com/saikusal/docsync/actions/workflows/ci.yml)
